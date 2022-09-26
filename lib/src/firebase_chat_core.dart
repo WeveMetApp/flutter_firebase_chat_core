@@ -83,6 +83,7 @@ class FirebaseChatCore {
           user.id: user.role?.toShortString(),
         },
       ),
+      'userLeftRoom': [false, false]
     });
 
     return types.Room(
@@ -93,6 +94,8 @@ class FirebaseChatCore {
       type: types.RoomType.group,
       users: roomUsers,
       unreadMsgCounter: unreadMsgCounter,
+      userIds: roomUsers.map((u) => u.id).toList(),
+      userLeftRoom: [false, false],
     );
   }
 
@@ -137,6 +140,7 @@ class FirebaseChatCore {
 
     // Check if room already exist.
     if (oldRoomQuery.docs.isNotEmpty) {
+      print('sajad old room found');
       final room = (await processRoomsQuery(
         fu,
         getFirebaseFirestore(),
@@ -144,7 +148,6 @@ class FirebaseChatCore {
         config.usersCollectionName,
       ))
           .first;
-
       return room;
     }
 
@@ -156,7 +159,7 @@ class FirebaseChatCore {
 
     final users = [types.User.fromJson(currentUser), otherUser];
 
-    // Create new room with sorted user ids array.
+    // Create new room with sorted user ids array
     final room = await getFirebaseFirestore().collection(config.roomsCollectionName).add({
       'createdAt': FieldValue.serverTimestamp(),
       'imageUrl': null,
@@ -167,6 +170,7 @@ class FirebaseChatCore {
       'userIds': userIds,
       'userRoles': null,
       'unreadMsgCounter': [0, 0],
+      'userLeftRoom': [false, false],
     });
 
     return types.Room(
@@ -175,6 +179,8 @@ class FirebaseChatCore {
       type: types.RoomType.direct,
       users: users,
       unreadMsgCounter: [0, 0],
+      userIds: userIds,
+      userLeftRoom: [false, false],
     );
   }
 
