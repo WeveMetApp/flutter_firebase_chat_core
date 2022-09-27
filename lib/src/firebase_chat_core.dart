@@ -74,16 +74,6 @@ class FirebaseChatCore {
       'name': name,
       'type': types.RoomType.group.toShortString(),
       'updatedAt': FieldValue.serverTimestamp(),
-      'userIds': roomUsers.map((u) => u.id).toList(),
-      'unreadMsgCounter': unreadMsgCounter,
-      'userRoles': roomUsers.fold<Map<String, String?>>(
-        {},
-        (previousValue, user) => {
-          ...previousValue,
-          user.id: user.role?.toShortString(),
-        },
-      ),
-      'userLeftRoom': [false, false]
     });
 
     return types.Room(
@@ -93,9 +83,20 @@ class FirebaseChatCore {
       name: name,
       type: types.RoomType.group,
       users: roomUsers,
-      unreadMsgCounter: unreadMsgCounter,
-      userIds: roomUsers.map((u) => u.id).toList(),
-      userLeftRoom: [false, false],
+      roomUsers: [
+        types.RoomUser(
+          userId: roomUsers[0].id,
+          isBlockedOtherUser: false,
+          unreadMsgCounter: 0,
+          isLeftRoom: false,
+        ),
+        types.RoomUser(
+          userId: roomUsers[1].id,
+          isBlockedOtherUser: false,
+          unreadMsgCounter: 0,
+          isLeftRoom: false,
+        ),
+      ],
     );
   }
 
@@ -167,10 +168,19 @@ class FirebaseChatCore {
       'name': null,
       'type': types.RoomType.direct.toShortString(),
       'updatedAt': FieldValue.serverTimestamp(),
-      'userIds': userIds,
       'userRoles': null,
-      'unreadMsgCounter': [0, 0],
-      'userLeftRoom': [false, false],
+      'user1': types.RoomUser(
+        userId: users[0].id,
+        isBlockedOtherUser: false,
+        unreadMsgCounter: 0,
+        isLeftRoom: false,
+      ),
+      'user2': types.RoomUser(
+        userId: users[1].id,
+        isBlockedOtherUser: false,
+        unreadMsgCounter: 0,
+        isLeftRoom: false,
+      ),
     });
 
     return types.Room(
@@ -178,9 +188,20 @@ class FirebaseChatCore {
       metadata: metadata,
       type: types.RoomType.direct,
       users: users,
-      unreadMsgCounter: [0, 0],
-      userIds: userIds,
-      userLeftRoom: [false, false],
+      roomUsers: [
+        types.RoomUser(
+          userId: users[0].id,
+          isBlockedOtherUser: false,
+          unreadMsgCounter: 0,
+          isLeftRoom: false,
+        ),
+        types.RoomUser(
+          userId: users[1].id,
+          isBlockedOtherUser: false,
+          unreadMsgCounter: 0,
+          isLeftRoom: false,
+        ),
+      ],
     );
   }
 
@@ -316,6 +337,7 @@ class FirebaseChatCore {
   /// does nothing.
   void sendMessage(dynamic partialMessage, String roomId) async {
     if (firebaseUser == null) return;
+    print('sajad partialMessage $partialMessage');
 
     types.Message? message;
 
@@ -353,8 +375,12 @@ class FirebaseChatCore {
       messageMap['updatedAt'] = FieldValue.serverTimestamp();
 
       await getFirebaseFirestore().collection('${config.roomsCollectionName}/$roomId/messages').add(messageMap);
+      // print('sajad firebase chat core message ${message.text}')
 
-      await getFirebaseFirestore().collection(config.roomsCollectionName).doc(roomId).update({'updatedAt': FieldValue.serverTimestamp()});
+      await getFirebaseFirestore().collection(config.roomsCollectionName).doc(roomId).update({
+        'updatedAt': FieldValue.serverTimestamp(),
+        'lastMessage': partialMessage.text,
+      });
     }
   }
 
