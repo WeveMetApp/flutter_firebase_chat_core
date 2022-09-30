@@ -47,58 +47,59 @@ class FirebaseChatCore {
   /// added to the group. [name] is required and will be used as
   /// a group name. Add an optional [imageUrl] that will be a group avatar
   /// and [metadata] for any additional custom data.
-  Future<types.Room> createGroupRoom({
-    types.Role creatorRole = types.Role.admin,
-    String? imageUrl,
-    Map<String, dynamic>? metadata,
-    required String name,
-    required List<types.User> users,
-  }) async {
-    if (firebaseUser == null) return Future.error('User does not exist');
+  // Future<types.Room> createGroupRoom({
+  //   types.Role creatorRole = types.Role.admin,
+  //   String? imageUrl,
+  //   Map<String, dynamic>? metadata,
+  //   required String name,
+  //   required List<types.User> users,
+  // }) async {
+  //   if (firebaseUser == null) return Future.error('User does not exist');
 
-    final currentUser = await fetchUser(
-      getFirebaseFirestore(),
-      firebaseUser!.uid,
-      config.usersCollectionName,
-      role: creatorRole.toShortString(),
-    );
+  //   final currentUser = await fetchUser(
+  //     getFirebaseFirestore(),
+  //     firebaseUser!.uid,
+  //     config.usersCollectionName,
+  //     role: creatorRole.toShortString(),
+  //   );
 
-    final roomUsers = [types.User.fromJson(currentUser)] + users;
+  //   final roomUsers = [types.User.fromJson(currentUser)] + users;
 
-    final unreadMsgCounter = [0, 0];
+  //   final unreadMsgCounter = [0, 0];
 
-    final room = await getFirebaseFirestore().collection(config.roomsCollectionName).add({
-      'createdAt': FieldValue.serverTimestamp(),
-      'imageUrl': imageUrl,
-      'metadata': metadata,
-      'name': name,
-      'type': types.RoomType.group.toShortString(),
-      'updatedAt': FieldValue.serverTimestamp(),
-    });
+  //   final room = await getFirebaseFirestore().collection(config.roomsCollectionName).add({
+  //     'createdAt': FieldValue.serverTimestamp(),
+  //     'imageUrl': imageUrl,
+  //     'metadata': metadata,
+  //     'name': name,
+  //     'type': types.RoomType.group.toShortString(),
+  //     'updatedAt': FieldValue.serverTimestamp(),
+  //   });
 
-    return types.Room(
-      id: room.id,
-      imageUrl: imageUrl,
-      metadata: metadata,
-      name: name,
-      type: types.RoomType.group,
-      users: roomUsers,
-      roomUsers: [
-        types.RoomUser(
-          userId: roomUsers[0].id,
-          isBlockedOtherUser: false,
-          unreadMsgCounter: 0,
-          isLeftRoom: false,
-        ),
-        types.RoomUser(
-          userId: roomUsers[1].id,
-          isBlockedOtherUser: false,
-          unreadMsgCounter: 0,
-          isLeftRoom: false,
-        ),
-      ],
-    );
-  }
+  //   return types.Room(
+  //     id: room.id,
+  //     imageUrl: imageUrl,
+  //     metadata: metadata,
+  //     name: name,
+  //     type: types.RoomType.group,
+  //     users: roomUsers,
+  //     userIds: user,
+  //     roomUsers: [
+  //       types.RoomUser(
+  //         userId: roomUsers[0].id,
+  //         isBlockedOtherUser: false,
+  //         unreadMsgCounter: 0,
+  //         isLeftRoom: false,
+  //       ),
+  //       types.RoomUser(
+  //         userId: roomUsers[1].id,
+  //         isBlockedOtherUser: false,
+  //         unreadMsgCounter: 0,
+  //         isLeftRoom: false,
+  //       ),
+  //     ],
+  //   );
+  // }
 
   /// Creates a direct chat for 2 people. Add [metadata] for any additional
   /// custom data.
@@ -141,7 +142,7 @@ class FirebaseChatCore {
 
     // Check if room already exist.
     if (oldRoomQuery.docs.isNotEmpty) {
-      print('sajad old room found');
+      // print('sajad old room found');
       final room = (await processRoomsQuery(
         fu,
         getFirebaseFirestore(),
@@ -168,19 +169,23 @@ class FirebaseChatCore {
       'name': null,
       'type': types.RoomType.direct.toShortString(),
       'updatedAt': FieldValue.serverTimestamp(),
-      'userRoles': null,
-      'user1': types.RoomUser(
-        userId: users[0].id,
-        isBlockedOtherUser: false,
-        unreadMsgCounter: 0,
-        isLeftRoom: false,
-      ),
-      'user2': types.RoomUser(
-        userId: users[1].id,
-        isBlockedOtherUser: false,
-        unreadMsgCounter: 0,
-        isLeftRoom: false,
-      ),
+      'userIds': userIds,
+      'roomUsers': [
+        types.RoomUser(
+          userId: users[0].id,
+          isBlockedOtherUser: false,
+          unreadMsgCounter: 0,
+          isLeftRoom: false,
+          isAnonymous: false,
+        ).toJson(),
+        types.RoomUser(
+          userId: users[1].id,
+          isBlockedOtherUser: false,
+          unreadMsgCounter: 0,
+          isLeftRoom: false,
+          isAnonymous: false,
+        ).toJson(),
+      ],
     });
 
     return types.Room(
@@ -188,18 +193,21 @@ class FirebaseChatCore {
       metadata: metadata,
       type: types.RoomType.direct,
       users: users,
+      userIds: userIds,
       roomUsers: [
         types.RoomUser(
           userId: users[0].id,
           isBlockedOtherUser: false,
           unreadMsgCounter: 0,
           isLeftRoom: false,
+          isAnonymous: false,
         ),
         types.RoomUser(
           userId: users[1].id,
           isBlockedOtherUser: false,
           unreadMsgCounter: 0,
           isLeftRoom: false,
+          isAnonymous: false,
         ),
       ],
     );
@@ -337,7 +345,7 @@ class FirebaseChatCore {
   /// does nothing.
   void sendMessage(dynamic partialMessage, String roomId) async {
     if (firebaseUser == null) return;
-    print('sajad partialMessage $partialMessage');
+    // print('sajad partialMessage $partialMessage');
 
     types.Message? message;
 
