@@ -128,7 +128,11 @@ class FirebaseChatCore {
       ))
           .first;
 
-      return room;
+      for (types.RoomUser roomUser in room.roomUsers) {
+        if (roomUser.userId == otherUser && roomUser.isAnonymous == false) {
+          return room;
+        }
+      }
     }
 
     // To support old chats created without sorted array,
