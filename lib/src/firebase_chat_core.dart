@@ -106,6 +106,7 @@ class FirebaseChatCore {
   Future<types.Room> createRoom(
     types.User otherUser, {
     Map<String, dynamic>? metadata,
+    bool? isAlwaysPinnedTop,
   }) async {
     final fu = firebaseUser;
 
@@ -167,6 +168,7 @@ class FirebaseChatCore {
 
     // Create new room with sorted user ids array
     final room = await getFirebaseFirestore().collection(config.roomsCollectionName).add({
+      'isAlwaysPinnedTop': isAlwaysPinnedTop,
       'createdAt': FieldValue.serverTimestamp(),
       'imageUrl': null,
       'metadata': metadata,
