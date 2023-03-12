@@ -17,11 +17,10 @@ dependencies:
   firebase_core: ^1.20.0
   flutter:
     sdk: flutter
-  # flutter_chat_types: ^3.4.3
   flutter_chat_types:
-    path: ../flutter_chat_types
-    # git:
-    #   url: https://github.com/sajadmaster/flutter_chat_types
+    git:
+      url: https://github.com/WeveMetApp/flutter_chat_types.git
+      ref: main
   meta: ^1.7.0
 
 dev_dependencies:

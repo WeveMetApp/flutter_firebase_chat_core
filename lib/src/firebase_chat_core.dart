@@ -116,8 +116,12 @@ class FirebaseChatCore {
     // this will make it easy to find the room if exist and make one read only.
     final userIds = [fu.uid, otherUser.id]..sort();
 
-    final roomQuery =
-        await getFirebaseFirestore().collection(config.roomsCollectionName).where('type', isEqualTo: types.RoomType.direct.toShortString()).where('userIds', isEqualTo: userIds).limit(1).get();
+    final roomQuery = await getFirebaseFirestore()
+        .collection(config.roomsCollectionName)
+        .where('type', isEqualTo: types.RoomType.direct.toShortString())
+        .where('userIds', isEqualTo: userIds)
+        .limit(1)
+        .get();
 
     // Check if room already exist.
     if (roomQuery.docs.isNotEmpty) {
@@ -258,7 +262,9 @@ class FirebaseChatCore {
     List<Object?>? startAfter,
     List<Object?>? startAt,
   }) {
-    var query = getFirebaseFirestore().collection('${config.roomsCollectionName}/${room.id}/messages').orderBy('createdAt', descending: true);
+    var query = getFirebaseFirestore()
+        .collection('${config.roomsCollectionName}/${room.id}/messages')
+        .orderBy('createdAt', descending: true);
 
     if (endAt != null) {
       query = query.endAt(endAt);
@@ -333,7 +339,10 @@ class FirebaseChatCore {
     if (fu == null) return const Stream.empty();
 
     final collection = orderByUpdatedAt
-        ? getFirebaseFirestore().collection(config.roomsCollectionName).where('userIds', arrayContains: fu.uid).orderBy('updatedAt', descending: true)
+        ? getFirebaseFirestore()
+            .collection(config.roomsCollectionName)
+            .where('userIds', arrayContains: fu.uid)
+            .orderBy('updatedAt', descending: true)
         : getFirebaseFirestore().collection(config.roomsCollectionName).where('userIds', arrayContains: fu.uid);
 
     return collection.snapshots().asyncMap(
@@ -351,9 +360,9 @@ class FirebaseChatCore {
   /// does nothing.
   void sendMessage(dynamic partialMessage, String roomId, String? otherUserId) async {
     if (firebaseUser == null) return;
-    // print('sajad partialMessage $partialMessage');
 
     types.Message? message;
+    String messageText = '';
 
     if (partialMessage is types.PartialCustom) {
       message = types.CustomMessage.fromPartial(
@@ -361,24 +370,28 @@ class FirebaseChatCore {
         id: '',
         partialCustom: partialMessage,
       );
+      messageText = 'Custom Message';
     } else if (partialMessage is types.PartialFile) {
       message = types.FileMessage.fromPartial(
         author: types.User(id: otherUserId ?? firebaseUser!.uid),
         id: '',
         partialFile: partialMessage,
       );
+      messageText = 'File';
     } else if (partialMessage is types.PartialImage) {
       message = types.ImageMessage.fromPartial(
         author: types.User(id: otherUserId ?? firebaseUser!.uid),
         id: '',
         partialImage: partialMessage,
       );
+      messageText = 'Image';
     } else if (partialMessage is types.PartialText) {
       message = types.TextMessage.fromPartial(
         author: types.User(id: otherUserId ?? firebaseUser!.uid),
         id: '',
         partialText: partialMessage,
       );
+      messageText = partialMessage.text;
     }
 
     if (message != null) {
@@ -389,11 +402,10 @@ class FirebaseChatCore {
       messageMap['updatedAt'] = FieldValue.serverTimestamp();
 
       await getFirebaseFirestore().collection('${config.roomsCollectionName}/$roomId/messages').add(messageMap);
-      // print('sajad firebase chat core message ${message.text}')
 
       await getFirebaseFirestore().collection(config.roomsCollectionName).doc(roomId).update({
         'updatedAt': FieldValue.serverTimestamp(),
-        'lastMessage': partialMessage.text,
+        'lastMessage': messageText,
       });
     }
   }
@@ -411,7 +423,10 @@ class FirebaseChatCore {
     messageMap['authorId'] = message.author.id;
     messageMap['updatedAt'] = FieldValue.serverTimestamp();
 
-    await getFirebaseFirestore().collection('${config.roomsCollectionName}/$roomId/messages').doc(message.id).update(messageMap);
+    await getFirebaseFirestore()
+        .collection('${config.roomsCollectionName}/$roomId/messages')
+        .doc(message.id)
+        .update(messageMap);
   }
 
   /// Updates a room in the Firestore. Accepts any room.
@@ -430,7 +445,8 @@ class FirebaseChatCore {
     roomMap['lastMessages'] = room.lastMessages?.map((m) {
       final messageMap = m.toJson();
 
-      messageMap.removeWhere((key, value) => key == 'author' || key == 'createdAt' || key == 'id' || key == 'updatedAt');
+      messageMap
+          .removeWhere((key, value) => key == 'author' || key == 'createdAt' || key == 'id' || key == 'updatedAt');
 
       messageMap['authorId'] = m.author.id;
 
